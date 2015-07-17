@@ -53,9 +53,7 @@ func poll(client librato.Client) {
 
 	for _, row := range data {
 		source := strings.Join([]string{row[0], os.Getenv("LIBRATO_SOURCE")}, "-")
-		if row[1] != "BACKEND" {
-			source = strings.Join([]string{source, row[1]}, "-")
-		}
+		source = strings.Join([]string{source, row[1]}, "-")
 
 		gauges := make([]interface{}, 0)
 		gauges = addGauge(gauges, row, "haproxy.qcur", 2)
