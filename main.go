@@ -12,13 +12,21 @@ import (
 	"github.com/samuel/go-librato/librato"
 )
 
-func field(row []string, index uint) (value float64) {
+func parseField(row []string, index uint) (value float64) {
 	value, err := strconv.ParseFloat(row[index], 64)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
 	return value
+}
+
+func addGauge(gauges []interface{}, row []string, name string, index uint) (result []interface{}){
+	if row[index] == "" {
+		return gauges
+	}
+
+	return append(gauges, librato.Metric{Name: name, Value: parseField(row, index)})
 }
 
 func poll(client librato.Client) {
@@ -44,26 +52,22 @@ func poll(client librato.Client) {
 	}
 
 	for _, row := range data {
-		if row[1] == "MONITOR" {
-			continue
-		}
-
 		source := strings.Join([]string{row[0], os.Getenv("LIBRATO_SOURCE")}, "-")
 		if row[1] != "BACKEND" {
 			source = strings.Join([]string{source, row[1]}, "-")
 		}
 
-		gauges := make([]interface{}, 10)
-		gauges[0] = librato.Metric{Name: "haproxy.qcur", Value: field(row, 2)}
-		gauges[1] = librato.Metric{Name: "haproxy.qmax", Value: field(row, 3)}
-		gauges[2] = librato.Metric{Name: "haproxy.scur", Value: field(row, 4)}
-		gauges[3] = librato.Metric{Name: "haproxy.smax", Value: field(row, 5)}
-		gauges[4] = librato.Metric{Name: "haproxy.downtime", Value: field(row, 24)}
-		gauges[5] = librato.Metric{Name: "haproxy.hrsp_1xx", Value: field(row, 39)}
-		gauges[6] = librato.Metric{Name: "haproxy.hrsp_2xx", Value: field(row, 40)}
-		gauges[7] = librato.Metric{Name: "haproxy.hrsp_3xx", Value: field(row, 41)}
-		gauges[8] = librato.Metric{Name: "haproxy.hrsp_4xx", Value: field(row, 42)}
-		gauges[9] = librato.Metric{Name: "haproxy.hrsp_5xx", Value: field(row, 43)}
+		gauges := make([]interface{}, 0)
+		gauges = addGauge(gauges, row, "haproxy.qcur", 2)
+		gauges = addGauge(gauges, row, "haproxy.qmax", 3)
+		gauges = addGauge(gauges, row, "haproxy.scur", 4)
+		gauges = addGauge(gauges, row, "haproxy.smax", 5)
+		gauges = addGauge(gauges, row, "haproxy.downtime", 24)
+		gauges = addGauge(gauges, row, "haproxy.hrsp_1xx", 39)
+		gauges = addGauge(gauges, row, "haproxy.hrsp_2xx", 40)
+		gauges = addGauge(gauges, row, "haproxy.hrsp_3xx", 41)
+		gauges = addGauge(gauges, row, "haproxy.hrsp_4xx", 42)
+		gauges = addGauge(gauges, row, "haproxy.hrsp_5xx", 43)
 
 		metrics := &librato.Metrics{Source: source, Gauges: gauges}
 
