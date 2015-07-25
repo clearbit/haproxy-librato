@@ -53,6 +53,8 @@ func poll(client librato.Client) {
 		os.Exit(1)
 	}
 
+	gauges := make([]interface{}, 0)
+
 	for _, row := range data {
 		source := os.Getenv("LIBRATO_SOURCE")
 		prefix := strings.Join([]string{"haproxy", row[0]}, ".")
@@ -67,7 +69,6 @@ func poll(client librato.Client) {
 			prefix = strings.Join([]string{prefix, "upstream"}, ".")
 		}
 
-		gauges := make([]interface{}, 0)
 		gauges = addGauge(gauges, source, prefix, "qcur", row[2])
 		gauges = addGauge(gauges, source, prefix, "qmax", row[3])
 		gauges = addGauge(gauges, source, prefix, "scur", row[4])
@@ -79,13 +80,13 @@ func poll(client librato.Client) {
 		gauges = addGauge(gauges, source, prefix, "hrsp_3xx", row[41])
 		gauges = addGauge(gauges, source, prefix, "hrsp_4xx", row[42])
 		gauges = addGauge(gauges, source, prefix, "hrsp_5xx", row[43])
+	}
 
-		metrics := &librato.Metrics{Gauges: gauges}
+	metrics := &librato.Metrics{Gauges: gauges}
 
-		err := client.PostMetrics(metrics)
-		if err != nil {
-			fmt.Println(err)
-		}
+	err = client.PostMetrics(metrics)
+	if err != nil {
+		fmt.Println(err)
 	}
 }
 
