@@ -91,9 +91,8 @@ func poll(client librato.Client) {
 
 func main() {
 	client := librato.Client{os.Getenv("LIBRATO_USER"), os.Getenv("LIBRATO_TOKEN")}
-
-	for {
+	ticker := time.Tick(30 * time.Second)
+	for _ = range ticker {
 		poll(client)
-		time.Sleep(30 * time.Second)
 	}
 }
