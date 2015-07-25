@@ -12,8 +12,8 @@ import (
 	"github.com/samuel/go-librato/librato"
 )
 
-func parseField(row []string, index uint) (value float64) {
-	value, err := strconv.ParseFloat(row[index], 64)
+func parseField(data string) (value float64) {
+	value, err := strconv.ParseFloat(data, 64)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -21,14 +21,14 @@ func parseField(row []string, index uint) (value float64) {
 	return value
 }
 
-func addGauge(gauges []interface{}, source string, prefix string, name string, row []string, index uint) (result []interface{}){
-	if row[index] == "" {
+func addGauge(gauges []interface{}, source string, prefix string, name string, data string) (result []interface{}) {
+	if data == "" {
 		return gauges
 	}
 
 	name = strings.Join([]string{prefix, name}, ".")
 
-	return append(gauges, librato.Metric{Source: source, Name: name, Value: parseField(row, index)})
+	return append(gauges, librato.Metric{Source: source, Name: name, Value: parseField(data)})
 }
 
 func poll(client librato.Client) {
@@ -68,16 +68,17 @@ func poll(client librato.Client) {
 		}
 
 		gauges := make([]interface{}, 0)
-		gauges = addGauge(gauges, source, prefix, "qcur", row, 2)
-		gauges = addGauge(gauges, source, prefix, "qmax", row, 3)
-		gauges = addGauge(gauges, source, prefix, "scur", row, 4)
-		gauges = addGauge(gauges, source, prefix, "smax", row, 5)
-		gauges = addGauge(gauges, source, prefix, "downtime", row, 24)
-		gauges = addGauge(gauges, source, prefix, "hrsp_1xx", row, 39)
-		gauges = addGauge(gauges, source, prefix, "hrsp_2xx", row, 40)
-		gauges = addGauge(gauges, source, prefix, "hrsp_3xx", row, 41)
-		gauges = addGauge(gauges, source, prefix, "hrsp_4xx", row, 42)
-		gauges = addGauge(gauges, source, prefix, "hrsp_5xx", row, 43)
+		gauges = addGauge(gauges, source, prefix, "qcur", row[2])
+		gauges = addGauge(gauges, source, prefix, "qmax", row[3])
+		gauges = addGauge(gauges, source, prefix, "scur", row[4])
+		gauges = addGauge(gauges, source, prefix, "smax", row[5])
+		gauges = addGauge(gauges, source, prefix, "downtime", row[24])
+
+		gauges = addGauge(gauges, source, prefix, "hrsp_1xx", row[39])
+		gauges = addGauge(gauges, source, prefix, "hrsp_2xx", row[40])
+		gauges = addGauge(gauges, source, prefix, "hrsp_3xx", row[41])
+		gauges = addGauge(gauges, source, prefix, "hrsp_4xx", row[42])
+		gauges = addGauge(gauges, source, prefix, "hrsp_5xx", row[43])
 
 		metrics := &librato.Metrics{Gauges: gauges}
 
