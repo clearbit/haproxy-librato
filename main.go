@@ -8,9 +8,11 @@ import (
 	"strconv"
 	"strings"
 	"time"
-
+	"flag"
 	"github.com/samuel/go-librato/librato"
 )
+
+var pollIntervalSeconds int
 
 func parseField(data string) (value float64) {
 	value, err := strconv.ParseFloat(data, 64)
@@ -91,8 +93,11 @@ func poll(client librato.Client) {
 }
 
 func main() {
+	flag.IntVar(&pollIntervalSeconds, "poll-interval", 30, "the interval in seconds at which stats will be sent to librato")
+	flag.Parse()
+	println(pollIntervalSeconds)
 	client := librato.Client{os.Getenv("LIBRATO_USER"), os.Getenv("LIBRATO_TOKEN")}
-	ticker := time.Tick(30 * time.Second)
+	ticker := time.Tick(time.Duration(pollIntervalSeconds) * time.Second)
 	for _ = range ticker {
 		poll(client)
 	}
